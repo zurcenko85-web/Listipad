@@ -2,24 +2,41 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>🍂 Листопад — осенняя игра</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a0f08">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🍂 Листопад</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  body {
-    height: 100vh;
+  html, body {
+    height: 100%;
     overflow: hidden;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: #1a0f08;
     user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    overscroll-behavior: none;
+    position: fixed;
+    width: 100%;
   }
 
-  canvas { display: block; position: absolute; inset: 0; z-index: 2; }
+  canvas {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    touch-action: none;
+  }
 
+  /* ===== UI сверху ===== */
   #ui {
     position: absolute;
     top: 0; left: 0; right: 0;
-    padding: 20px 30px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -27,62 +44,79 @@
     pointer-events: none;
     color: #fff3e0;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    gap: 10px;
   }
 
   .stat {
-    background: rgba(60, 30, 15, 0.45);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 200, 140, 0.25);
-    padding: 10px 18px;
-    border-radius: 14px;
-    font-size: 16px;
-    letter-spacing: 0.5px;
+    background: rgba(60, 30, 15, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 200, 140, 0.3);
+    padding: 8px 16px;
+    border-radius: 16px;
+    font-size: 13px;
+    letter-spacing: 0.8px;
+    font-weight: 600;
   }
 
   .stat b {
     display: block;
-    font-size: 26px;
+    font-size: 24px;
     color: #ffcf8a;
     margin-top: 2px;
+    font-weight: 800;
   }
 
+  #livesDisplay {
+    font-size: 18px !important;
+    letter-spacing: 2px;
+    line-height: 1.2;
+  }
+
+  /* ===== Кнопка паузы — БОЛЬШАЯ ===== */
   #pauseBtn {
     pointer-events: auto;
-    background: rgba(60, 30, 15, 0.55);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 200, 140, 0.35);
+    background: rgba(60, 30, 15, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 200, 140, 0.4);
     color: #ffcf8a;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    font-size: 22px;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    font-size: 32px;
     cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
+    transition: transform 0.15s, background 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    flex-shrink: 0;
   }
-  #pauseBtn:hover {
-    transform: scale(1.08);
-    background: rgba(255, 180, 100, 0.3);
+  #pauseBtn:active {
+    transform: scale(0.92);
+    background: rgba(255, 180, 100, 0.35);
   }
-  #pauseBtn:active { transform: scale(0.95); }
 
+  /* ===== Комбо ===== */
   #combo {
     position: absolute;
-    top: 140px;
+    top: 130px;
     left: 50%;
     transform: translateX(-50%) scale(0);
-    font-size: 42px;
-    font-weight: 800;
+    font-size: 48px;
+    font-weight: 900;
     color: #ffb347;
-    text-shadow: 0 0 20px rgba(255, 160, 60, 0.9), 0 3px 10px rgba(0,0,0,0.6);
+    text-shadow: 0 0 25px rgba(255, 160, 60, 1), 0 4px 12px rgba(0,0,0,0.7);
     z-index: 10;
     pointer-events: none;
     transition: transform 0.15s cubic-bezier(.17,.89,.32,1.49);
+    white-space: nowrap;
   }
   #combo.show { transform: translateX(-50%) scale(1); }
 
+  /* ===== Overlay ===== */
   #overlay {
     position: absolute;
     inset: 0;
@@ -91,116 +125,151 @@
     justify-content: center;
     align-items: center;
     z-index: 20;
-    background: rgba(30, 15, 8, 0.72);
-    backdrop-filter: blur(10px);
+    background: rgba(30, 15, 8, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: #fff3e0;
     text-align: center;
-    padding: 20px;
+    padding: 24px;
     transition: opacity 0.4s;
   }
   #overlay.hidden { opacity: 0; pointer-events: none; }
 
   #overlay h1 {
-    font-size: clamp(38px, 8vw, 72px);
+    font-size: clamp(44px, 12vw, 80px);
     background: linear-gradient(135deg, #ffcf8a, #ff8c42, #d94f1e);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 12px;
-    letter-spacing: 2px;
+    margin-bottom: 16px;
+    letter-spacing: 3px;
+    font-weight: 900;
   }
 
   #overlay p {
-    font-size: 18px;
+    font-size: 17px;
     max-width: 480px;
     line-height: 1.6;
-    opacity: 0.9;
-    margin-bottom: 30px;
+    opacity: 0.92;
+    margin-bottom: 28px;
   }
 
   #overlay .score-final {
-    font-size: 24px;
+    font-size: 22px;
     color: #ffcf8a;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    line-height: 1.5;
   }
 
+  /* ===== БОЛЬШИЕ КНОПКИ ===== */
   button {
     pointer-events: auto;
-    padding: 16px 48px;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    padding: 20px 56px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
     color: #3a1d0d;
     background: linear-gradient(135deg, #ffcf8a, #ff9a4a);
     border: none;
-    border-radius: 50px;
+    border-radius: 60px;
     cursor: pointer;
-    box-shadow: 0 8px 30px rgba(255, 140, 60, 0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
-    margin: 6px;
+    box-shadow: 0 10px 34px rgba(255, 140, 60, 0.55);
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin: 10px;
+    min-width: 260px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    font-family: inherit;
   }
-  button:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 12px 40px rgba(255, 140, 60, 0.7);
+  button:active {
+    transform: scale(0.96);
+    box-shadow: 0 6px 20px rgba(255, 140, 60, 0.7);
   }
-  button:active { transform: translateY(0) scale(0.98); }
 
   .btn-secondary {
-    background: rgba(255, 200, 140, 0.15);
+    background: rgba(255, 200, 140, 0.16);
     color: #ffcf8a;
-    border: 1px solid rgba(255, 200, 140, 0.4);
+    border: 2px solid rgba(255, 200, 140, 0.5);
     box-shadow: none;
-    font-size: 17px;
-    padding: 13px 36px;
+    font-size: 19px;
+    padding: 16px 44px;
+    min-width: 240px;
   }
-  .btn-secondary:hover {
-    background: rgba(255, 200, 140, 0.25);
-    box-shadow: 0 6px 20px rgba(255, 180, 100, 0.3);
+  .btn-secondary:active {
+    background: rgba(255, 200, 140, 0.3);
   }
 
-  #pauseMenu h1 { font-size: clamp(32px, 6vw, 56px); margin-bottom: 30px; }
+  #pauseMenu h1 {
+    font-size: clamp(36px, 9vw, 64px);
+    margin-bottom: 32px;
+  }
 
   .pause-actions {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
   }
 
+  /* ===== Ветер ===== */
   #wind {
     position: absolute;
-    bottom: 20px;
-    right: 30px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    right: 20px;
     z-index: 10;
-    color: rgba(255, 243, 224, 0.7);
-    font-size: 14px;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    color: rgba(255, 243, 224, 0.75);
+    font-size: 15px;
+    font-weight: 600;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.7);
     pointer-events: none;
+    background: rgba(60, 30, 15, 0.45);
+    padding: 8px 14px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
+  /* ===== Кнопка звука — БОЛЬШАЯ ===== */
   #soundToggle {
     position: absolute;
-    bottom: 20px;
-    left: 30px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    left: 20px;
     z-index: 10;
     pointer-events: auto;
-    background: rgba(60, 30, 15, 0.55);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 200, 140, 0.35);
+    background: rgba(60, 30, 15, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 200, 140, 0.4);
     color: #ffcf8a;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    font-size: 18px;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    font-size: 28px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s, background 0.2s;
+    transition: transform 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
-  #soundToggle:hover {
-    transform: scale(1.08);
-    background: rgba(255, 180, 100, 0.3);
+  #soundToggle:active {
+    transform: scale(0.92);
+    background: rgba(255, 180, 100, 0.35);
+  }
+
+  /* ===== Landscape адаптация ===== */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #ui { padding: 8px 12px; }
+    .stat { padding: 6px 12px; font-size: 11px; }
+    .stat b { font-size: 18px; }
+    #pauseBtn { width: 56px; height: 56px; font-size: 24px; border-radius: 16px; }
+    #soundToggle { width: 50px; height: 50px; font-size: 22px; border-radius: 14px; }
+    #overlay h1 { font-size: 42px; margin-bottom: 8px; }
+    #overlay p { font-size: 14px; margin-bottom: 16px; }
+    button { padding: 14px 36px; font-size: 18px; min-width: 200px; margin: 6px; }
+    .btn-secondary { padding: 12px 30px; font-size: 16px; min-width: 180px; }
+    #combo { font-size: 36px; top: 80px; }
   }
 </style>
 </head>
@@ -211,14 +280,14 @@
 <div id="ui">
   <div class="stat">ОЧКИ <b id="score">0</b></div>
   <div style="display:flex; gap:10px; align-items:flex-start;">
-    <div class="stat">ЖИЗНИ <b id="lives">❤❤❤</b></div>
-    <button id="pauseBtn" title="Пауза (Esc)">⏸</button>
+    <div class="stat">ЖИЗНИ <b id="livesDisplay">❤❤❤</b></div>
+    <button id="pauseBtn" title="Пауза">⏸</button>
   </div>
 </div>
 
 <div id="combo"></div>
 
-<div id="wind">🍃 ветер: <span id="windDir">—</span></div>
+<div id="wind">🍃 <span id="windDir">—</span></div>
 
 <button id="soundToggle" title="Звук">🔊</button>
 
@@ -226,6 +295,8 @@
   <h1>ЛИСТОПАД</h1>
   <p>Лови осенние листья корзинкой. Собирай комбо за подряд!<br>
   ⚠️ Избегай колючих каштанов — они отнимают жизнь.</p>
+  <p style="font-size:14px; opacity:0.7;">👆 Ведите пальцем по экрану<br>
+  ⏸ Esc или Пробел — пауза</p>
   <button id="startBtn">НАЧАТЬ</button>
 </div>
 
@@ -234,28 +305,27 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
-  let W, H;
+  let W, H, DPR;
   function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     generateLandscape();
   }
 
   // ============================================================
-  // ==== АУДИО-ДВИЖОК: «АМЕЛИ» + ВЕТЕР ====
+  // ==== АУДИО =====
   // ============================================================
   const audioEngine = {
-    ctx: null,
-    master: null,
-    musicGain: null,
-    windGain: null,
-    enabled: true,
-    started: false,
-    windSource: null,
-    windFilter: null,
-    windLfo: null,
-    melodyIndex: 0,
-    scheduleTimer: null,
+    ctx: null, master: null, musicGain: null, windGain: null,
+    enabled: true, started: false,
+    windSource: null, windLfo: null,
+    melodyIndex: 0, scheduleTimer: null,
 
     noteFreq: {
       A2: 110.00, C3: 130.81, E3: 164.81,
@@ -275,17 +345,14 @@
       this.master.gain.value = 0.0;
       this.master.connect(this.ctx.destination);
 
-      // Музыка — на максимум
       this.musicGain = this.ctx.createGain();
       this.musicGain.gain.value = 1.0;
       this.musicGain.connect(this.master);
 
-      // Ветер — сильно тише
       this.windGain = this.ctx.createGain();
       this.windGain.gain.value = 0.04;
       this.windGain.connect(this.master);
 
-      // Мягкий реверб для музыки
       const delay = this.ctx.createDelay(0.5);
       delay.delayTime.value = 0.25;
       const feedback = this.ctx.createGain();
@@ -329,8 +396,7 @@
       gain.connect(filter);
       filter.connect(this.musicGain);
 
-      osc1.start(time);
-      osc2.start(time);
+      osc1.start(time); osc2.start(time);
       osc1.stop(time + duration + 0.1);
       osc2.stop(time + duration + 0.1);
     },
@@ -338,43 +404,36 @@
     schedulePhrase() {
       if (!this.started || !this.enabled) return;
       const t = this.ctx.currentTime + 0.05;
-
       const phrase = this.melodyIndex % 4;
       let bass, chordNotes, melody;
 
       switch(phrase) {
-        case 0: // Am
+        case 0:
           bass = this.noteFreq.A2;
           chordNotes = [this.noteFreq.E3, this.noteFreq.A2 * 2, this.noteFreq.C3 * 2];
           melody = [this.noteFreq.E4, this.noteFreq.G4, this.noteFreq.A4, this.noteFreq.B4];
           break;
-        case 1: // F
+        case 1:
           bass = this.noteFreq.F2;
           chordNotes = [this.noteFreq.C3, this.noteFreq.F2 * 2, this.noteFreq.A2b * 2];
           melody = [this.noteFreq.A4, this.noteFreq.G4, this.noteFreq.F4, this.noteFreq.E4];
           break;
-        case 2: // C
+        case 2:
           bass = this.noteFreq.C3;
           chordNotes = [this.noteFreq.G3s, this.noteFreq.C3 * 2, this.noteFreq.E3s * 2];
           melody = [this.noteFreq.E4, this.noteFreq.F4, this.noteFreq.G4, this.noteFreq.E4];
           break;
-        case 3: // G
+        case 3:
           bass = this.noteFreq.G2;
           chordNotes = [this.noteFreq.D3, this.noteFreq.G2 * 2, this.noteFreq.B2 * 2];
           melody = [this.noteFreq.D5, this.noteFreq.C5, this.noteFreq.B4, this.noteFreq.A4];
           break;
       }
 
-      // Бас — громче
       this.playNote(bass, t, 2.8, 0.45, true);
-
-      // Арпеджио — громче
       for (let i = 0; i < 6; i++) {
-        const note = chordNotes[i % chordNotes.length];
-        this.playNote(note, t + i * 0.45, 0.6, 0.16, true);
+        this.playNote(chordNotes[i % chordNotes.length], t + i * 0.45, 0.6, 0.16, true);
       }
-
-      // Мелодия — заметно громче
       melody.forEach((note, i) => {
         this.playNote(note, t + 0.2 + i * 0.7, 0.8, 0.28, false);
       });
@@ -387,20 +446,17 @@
       const bufferSize = 2 * this.ctx.sampleRate;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
 
       this.windSource = this.ctx.createBufferSource();
       this.windSource.buffer = buffer;
       this.windSource.loop = true;
 
-      this.windFilter = this.ctx.createBiquadFilter();
-      this.windFilter.type = 'bandpass';
-      this.windFilter.frequency.value = 400;
-      this.windFilter.Q.value = 0.8;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 400;
+      filter.Q.value = 0.8;
 
-      // Модуляция стала совсем деликатной
       const lfoGain = this.ctx.createGain();
       lfoGain.gain.value = 0.03;
       this.windLfo = this.ctx.createOscillator();
@@ -409,8 +465,8 @@
       lfoGain.connect(this.windGain.gain);
       this.windLfo.start();
 
-      this.windSource.connect(this.windFilter);
-      this.windFilter.connect(this.windGain);
+      this.windSource.connect(filter);
+      filter.connect(this.windGain);
       this.windSource.start();
     },
 
@@ -419,11 +475,8 @@
       if (this.ctx.state === 'suspended') this.ctx.resume();
       if (this.started) return;
       this.started = true;
-
-      // Общий уровень звука выше
       this.master.gain.cancelScheduledValues(this.ctx.currentTime);
       this.master.gain.linearRampToValueAtTime(0.35, this.ctx.currentTime + 4);
-
       this.startWind();
       setTimeout(() => this.schedulePhrase(), 500);
     },
@@ -436,20 +489,15 @@
         this.enabled ? 0.35 : 0,
         this.ctx.currentTime + 1
       );
-      if (!this.enabled && this.scheduleTimer) {
-        clearTimeout(this.scheduleTimer);
-      } else if (this.enabled && this.started) {
-        this.schedulePhrase();
-      }
+      if (!this.enabled && this.scheduleTimer) clearTimeout(this.scheduleTimer);
+      else if (this.enabled && this.started) this.schedulePhrase();
     }
   };
 
   // ============================================================
-  // ==== ОСЕННИЙ ПЕЙЗАЖ ====
+  // ==== ПЕЙЗАЖ =====
   // ============================================================
-  let hills = [];
-  let bgTrees = [];
-  let clouds = [];
+  let hills = [], bgTrees = [], clouds = [];
 
   function generateLandscape() {
     hills = [];
@@ -459,7 +507,6 @@
       { color: '#3a1f14', yBase: 0.78, amp: 70, count: 3, alpha: 0.85 },
       { color: '#2a1409', yBase: 0.92, amp: 50, count: 3, alpha: 1.0 }
     ];
-
     layers.forEach((layer, li) => {
       const pts = [];
       const seed = li * 137;
@@ -467,14 +514,13 @@
         const t = i / layer.count;
         const x = t * W;
         const noise = Math.sin(seed + i * 1.7) * 0.5 + Math.sin(seed * 2 + i * 3.3) * 0.3;
-        const y = H * layer.yBase - noise * layer.amp;
-        pts.push({ x, y });
+        pts.push({ x, y: H * layer.yBase - noise * layer.amp });
       }
       hills.push({ ...layer, points: pts });
     });
 
     bgTrees = [];
-    const treeCount = Math.max(6, Math.floor(W / 180));
+    const treeCount = Math.max(4, Math.floor(W / 200));
     for (let i = 0; i < treeCount; i++) {
       const x = (i + 0.5) * (W / treeCount) + (Math.random() - 0.5) * 60;
       const baseY = H * (0.72 + Math.random() * 0.08);
@@ -488,12 +534,12 @@
     }
 
     clouds = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
       clouds.push({
         x: Math.random() * W,
-        y: 60 + Math.random() * (H * 0.25),
-        w: 180 + Math.random() * 200,
-        h: 40 + Math.random() * 30,
+        y: 60 + Math.random() * (H * 0.2),
+        w: 180 + Math.random() * 180,
+        h: 40 + Math.random() * 25,
         speed: 4 + Math.random() * 8,
         alpha: 0.15 + Math.random() * 0.15
       });
@@ -501,37 +547,25 @@
   }
   resize();
   window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 200));
 
   // ============================================================
-  // ==== СОСТОЯНИЕ ИГРЫ ====
+  // ==== СОСТОЯНИЕ =====
   // ============================================================
   const state = {
-    running: false,
-    paused: false,
-    score: 0,
-    lives: 3,
-    combo: 0,
-    bestCombo: 0,
-    time: 0,
-    wind: 0,
-    windTimer: 0,
-    spawnTimer: 0,
-    spawnInterval: 0.55,
-    difficulty: 0
+    running: false, paused: false, score: 0, lives: 3,
+    combo: 0, bestCombo: 0, time: 0,
+    wind: 0, windTimer: 0,
+    spawnTimer: 0, spawnInterval: 0.45, difficulty: 0
   };
 
-  const BASKET = { x: 0, y: 0, w: 110, h: 70, targetX: 0, tilt: 0 };
+  const BASKET = { x: 0, y: 0, w: 130, h: 80, targetX: 0, tilt: 0 };
 
-  const leaves = [];
-  const hazards = [];
-  const particles = [];
-  const ambientLeaves = [];
+  const leaves = [], hazards = [], particles = [], ambientLeaves = [];
 
   const LEAF_COLORS = [
-    ['#ffb347', '#ff8c42'],
-    ['#e74c3c', '#c0392b'],
-    ['#f4d03f', '#d4a017'],
-    ['#d35400', '#a04000'],
+    ['#ffb347', '#ff8c42'], ['#e74c3c', '#c0392b'],
+    ['#f4d03f', '#d4a017'], ['#d35400', '#a04000'],
     ['#c98a3a', '#8b5a2b']
   ];
 
@@ -539,14 +573,18 @@
     return LEAF_COLORS[(Math.random() * LEAF_COLORS.length) | 0];
   }
 
+  // ===== УВЕЛИЧЕННАЯ СКОРОСТЬ ПАДЕНИЯ =====
+  const BASE_LEAF_SPEED = 140;   // было 60
+  const BASE_HAZARD_SPEED = 170;  // было 80
+
   function spawnLeaf() {
-    const size = 22 + Math.random() * 18;
+    const size = 24 + Math.random() * 18;
     const [c1, c2] = randomLeafColor();
     leaves.push({
       x: Math.random() * (W - 80) + 40,
       y: -60,
-      vx: (Math.random() - 0.5) * 40,
-      vy: 60 + Math.random() * 70 + state.difficulty * 15,
+      vx: (Math.random() - 0.5) * 50,
+      vy: BASE_LEAF_SPEED + Math.random() * 80 + state.difficulty * 25,
       size, rot: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 4,
       swayAmp: 20 + Math.random() * 40,
@@ -557,12 +595,12 @@
   }
 
   function spawnHazard() {
-    const size = 26 + Math.random() * 10;
+    const size = 28 + Math.random() * 12;
     hazards.push({
       x: Math.random() * (W - 80) + 40,
       y: -60,
-      vx: (Math.random() - 0.5) * 30,
-      vy: 80 + Math.random() * 60 + state.difficulty * 20,
+      vx: (Math.random() - 0.5) * 40,
+      vy: BASE_HAZARD_SPEED + Math.random() * 70 + state.difficulty * 30,
       size, rot: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 5,
       alive: true
@@ -578,8 +616,7 @@
         vx: Math.cos(a) * sp,
         vy: Math.sin(a) * sp - 40,
         life: 0.6 + Math.random() * 0.5,
-        maxLife: 1,
-        color,
+        maxLife: 1, color,
         size: 2 + Math.random() * 4
       });
     }
@@ -587,10 +624,9 @@
 
   function spawnAmbientLeaf() {
     ambientLeaves.push({
-      x: Math.random() * W,
-      y: -20,
+      x: Math.random() * W, y: -20,
       vx: (Math.random() - 0.5) * 10,
-      vy: 15 + Math.random() * 25,
+      vy: 25 + Math.random() * 35,
       size: 6 + Math.random() * 8,
       rot: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 2,
@@ -600,7 +636,7 @@
   }
 
   // ============================================================
-  // ==== ОТРИСОВКА ПЕЙЗАЖА ====
+  // ==== РЕНДЕР ПЕЙЗАЖА =====
   // ============================================================
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -613,8 +649,7 @@
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    const sunX = W * 0.75, sunY = H * 0.32;
-    const sunR = 90;
+    const sunX = W * 0.75, sunY = H * 0.32, sunR = 90;
     const sunGlow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, sunR * 3.5);
     sunGlow.addColorStop(0, 'rgba(255, 235, 180, 0.95)');
     sunGlow.addColorStop(0.15, 'rgba(255, 200, 120, 0.6)');
@@ -644,7 +679,7 @@
   }
 
   function drawHills() {
-    hills.forEach((layer) => {
+    hills.forEach(layer => {
       ctx.beginPath();
       ctx.moveTo(0, H);
       layer.points.forEach(p => ctx.lineTo(p.x, p.y));
@@ -676,8 +711,7 @@
       ctx.fillRect(t.x - 3, t.baseY - t.h, 6, t.h);
 
       const crownGrad = ctx.createRadialGradient(
-        t.x, t.baseY - t.h, 0,
-        t.x, t.baseY - t.h, t.crownR * 1.6
+        t.x, t.baseY - t.h, 0, t.x, t.baseY - t.h, t.crownR * 1.6
       );
       crownGrad.addColorStop(0, t.color);
       crownGrad.addColorStop(1, 'rgba(60, 25, 12, 0.85)');
@@ -720,7 +754,7 @@
   }
 
   // ============================================================
-  // ==== ОТРИСОВКА ОБЪЕКТОВ ====
+  // ==== РЕНДЕР ОБЪЕКТОВ =====
   // ============================================================
   function drawLeaf(l) {
     ctx.save();
@@ -790,8 +824,9 @@
     ctx.save();
     ctx.translate(b.x, b.y + b.h * 0.5);
     ctx.rotate(b.tilt);
+
     ctx.beginPath();
-    ctx.ellipse(0, b.h * 0.55, b.w * 0.5, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, b.h * 0.55, b.w * 0.5, 10, 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fill();
 
@@ -821,7 +856,7 @@
     }
 
     ctx.beginPath();
-    ctx.ellipse(0, -b.h * 0.4, b.w * 0.47, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -b.h * 0.4, b.w * 0.47, 9, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#a0682d';
     ctx.fill();
     ctx.strokeStyle = '#5a3a1a';
@@ -842,7 +877,7 @@
   }
 
   // ============================================================
-  // ==== ОБНОВЛЕНИЕ ====
+  // ==== ОБНОВЛЕНИЕ =====
   // ============================================================
   function update(dt) {
     state.time += dt;
@@ -870,7 +905,7 @@
     }
 
     state.difficulty = Math.min(3, state.time / 30);
-    state.spawnInterval = Math.max(0.25, 0.6 - state.difficulty * 0.1);
+    state.spawnInterval = Math.max(0.22, 0.5 - state.difficulty * 0.08);
 
     state.spawnTimer -= dt;
     if (state.spawnTimer <= 0) {
@@ -879,8 +914,8 @@
       else spawnHazard();
     }
 
-    BASKET.x += (BASKET.targetX - BASKET.x) * Math.min(1, dt * 14);
-    BASKET.tilt = (BASKET.targetX - BASKET.x) * 0.0015;
+    BASKET.x += (BASKET.targetX - BASKET.x) * Math.min(1, dt * 16);
+    BASKET.tilt = (BASKET.targetX - BASKET.x) * 0.0018;
     BASKET.tilt = Math.max(-0.25, Math.min(0.25, BASKET.tilt));
 
     for (let i = leaves.length - 1; i >= 0; i--) {
@@ -963,12 +998,13 @@
 
   function updateUI() {
     document.getElementById('score').textContent = state.score;
-    document.getElementById('lives').textContent = '❤'.repeat(Math.max(0, state.lives)) +
+    document.getElementById('livesDisplay').textContent =
+      '❤'.repeat(Math.max(0, state.lives)) +
       '♡'.repeat(Math.max(0, 3 - state.lives));
   }
 
   // ============================================================
-  // ==== РЕНДЕР ====
+  // ==== РЕНДЕР =====
   // ============================================================
   function render() {
     ctx.save();
@@ -990,7 +1026,10 @@
     drawParticles();
     drawBasket();
 
-    const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
+    const vg = ctx.createRadialGradient(
+      W / 2, H / 2, Math.min(W, H) * 0.3,
+      W / 2, H / 2, Math.max(W, H) * 0.75
+    );
     vg.addColorStop(0, 'rgba(0,0,0,0)');
     vg.addColorStop(1, 'rgba(20, 8, 4, 0.55)');
     ctx.fillStyle = vg;
@@ -1000,20 +1039,19 @@
   }
 
   // ============================================================
-  // ==== ИГРОВОЙ ЦИКЛ ====
+  // ==== ИГРОВОЙ ЦИКЛ =====
   // ============================================================
   let lastTime = 0;
   function loop(t) {
     const dt = Math.min(0.05, (t - lastTime) / 1000) || 0;
     lastTime = t;
-
     if (state.running && !state.paused) update(dt);
     render();
     requestAnimationFrame(loop);
   }
 
   // ============================================================
-  // ==== УПРАВЛЕНИЕ ====
+  // ==== УПРАВЛЕНИЕ (touch + mouse) =====
   // ============================================================
   function setTarget(clientX) {
     BASKET.targetX = Math.max(BASKET.w * 0.5, Math.min(W - BASKET.w * 0.5, clientX));
@@ -1023,17 +1061,26 @@
     if (state.running && !state.paused) setTarget(e.clientX);
   });
 
-  window.addEventListener('touchmove', e => {
+  // Touch-управление: палец ведёт корзинку
+  let touchActive = false;
+  window.addEventListener('touchstart', e => {
     if (state.running && !state.paused) {
+      touchActive = true;
+      setTarget(e.touches[0].clientX);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', e => {
+    if (state.running && !state.paused && touchActive) {
       e.preventDefault();
       setTarget(e.touches[0].clientX);
     }
   }, { passive: false });
 
-  window.addEventListener('touchstart', e => {
-    if (state.running && !state.paused) setTarget(e.touches[0].clientX);
-  });
+  window.addEventListener('touchend', () => { touchActive = false; });
+  window.addEventListener('touchcancel', () => { touchActive = false; });
 
+  // Клавиатура (для десктопа)
   const keys = {};
   window.addEventListener('keydown', e => {
     keys[e.key] = true;
@@ -1042,8 +1089,17 @@
   });
   window.addEventListener('keyup', e => { keys[e.key] = false; });
 
+  setInterval(() => {
+    if (!state.running || state.paused) return;
+    const speed = 14;
+    if (keys['ArrowLeft'] || keys['a'] || keys['ф'])
+      BASKET.targetX = Math.max(BASKET.w * 0.5, BASKET.targetX - speed);
+    if (keys['ArrowRight'] || keys['d'] || keys['в'])
+      BASKET.targetX = Math.min(W - BASKET.w * 0.5, BASKET.targetX + speed);
+  }, 16);
+
   // ============================================================
-  // ==== ПАУЗА / СТАРТ / КОНЕЦ ====
+  // ==== ПАУЗА / СТАРТ / КОНЕЦ =====
   // ============================================================
   const pauseBtn = document.getElementById('pauseBtn');
   const overlay = document.getElementById('overlay');
@@ -1092,10 +1148,10 @@
   function showMainMenu() {
     overlay.innerHTML = `
       <h1>ЛИСТОПАД</h1>
-      <p>Лови осенние листья корзинкой. Собирай комбо за подряд!<br>
-      ⚠️ Избегай колючих каштанов — они отнимают жизнь.</p>
-      <p style="font-size:14px; opacity:0.7;">🖱 мышь / 👆 палец / ⌨ ← → — управление<br>
-      ⏸ Esc или Пробел — пауза</p>
+      <p>Лови осенние листья корзинкой.<br>
+      Собирай комбо за подряд!<br>
+      ⚠️ Избегай колючих каштанов —<br>они отнимают жизнь.</p>
+      <p style="font-size:14px; opacity:0.7;">👆 Ведите пальцем по экрану</p>
       <button id="startBtn">НАЧАТЬ</button>
     `;
     overlay.classList.remove('hidden');
@@ -1113,14 +1169,14 @@
     state.difficulty = 0;
     state.wind = 0;
     state.windTimer = 3;
-    state.spawnTimer = 0.5;
+    state.spawnTimer = 0.4;
     leaves.length = 0;
     hazards.length = 0;
     particles.length = 0;
     ambientLeaves.length = 0;
     BASKET.x = W / 2;
     BASKET.targetX = W / 2;
-    BASKET.y = H - 130;
+    BASKET.y = H - 150;
     updateUI();
     document.getElementById('windDir').textContent = '—';
   }
@@ -1129,7 +1185,8 @@
     state.running = false;
     overlay.innerHTML = `
       <h1>ЛИСТОПАД</h1>
-      <p class="score-final">Очки: <b>${state.score}</b> &nbsp;•&nbsp; Лучшее комбо: <b>x${state.bestCombo}</b></p>
+      <p class="score-final">Очки: <b>${state.score}</b><br>
+      Лучшее комбо: <b>x${state.bestCombo}</b></p>
       <p>${state.score > 300 ? '🍁 Настоящий мастер листопада!' :
            state.score > 150 ? '🍂 Отличный результат!' :
            '🍃 Неплохо, попробуй ещё!'}</p>
@@ -1162,20 +1219,10 @@
     soundBtn.textContent = audioEngine.enabled ? '🔊' : '🔇';
   });
 
-  setInterval(() => {
-    if (!state.running || state.paused) return;
-    const speed = 12;
-    if (keys['ArrowLeft'] || keys['a'] || keys['ф']) {
-      BASKET.targetX = Math.max(BASKET.w * 0.5, BASKET.targetX - speed);
-    }
-    if (keys['ArrowRight'] || keys['d'] || keys['в']) {
-      BASKET.targetX = Math.min(W - BASKET.w * 0.5, BASKET.targetX + speed);
-    }
-  }, 16);
-
+  // Инициализация
   BASKET.x = W / 2;
   BASKET.targetX = W / 2;
-  BASKET.y = H - 130;
+  BASKET.y = H - 150;
 
   document.getElementById('startBtn').addEventListener('click', startGame);
 
