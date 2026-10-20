@@ -9,39 +9,42 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>🍂 Листопад</title>
 <style>
+  /* ================= СБРОС СТИЛЕЙ И БАЗОВЫЕ НАСТРОЙКИ ================= */
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   html, body {
     height: 100%;
-    overflow: hidden;
+    overflow: hidden; /* Запрещаем скролл страницы */
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: #1a0f08;
-    user-select: none;
+    user-select: none; /* Запрещаем выделение текста */
     -webkit-user-select: none;
-    touch-action: none;
+    touch-action: none; /* Отключаем стандартные жесты браузера (зум, скролл) */
     overscroll-behavior: none;
     position: fixed;
     width: 100%;
   }
 
+  /* ================= CANVAS (ИГРОВОЕ ПОЛЕ) ================= */
   canvas {
     display: block;
     position: absolute;
-    inset: 0;
+    inset: 0; /* Растягиваем на весь экран */
     z-index: 2;
     touch-action: none;
   }
 
-  /* ===== UI сверху ===== */
+  /* ================= ВЕРХНИЙ ИНТЕРФЕЙС (ОЧКИ, ЖИЗНИ, ПАУЗА) ================= */
   #ui {
     position: absolute;
     top: 0; left: 0; right: 0;
+    /* Отступ сверху учитывает "чёлку" (safe-area) на современных телефонах */
     padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     z-index: 10;
-    pointer-events: none;
+    pointer-events: none; /* Чтобы клики проходили сквозь контейнер */
     color: #fff3e0;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     gap: 10px;
@@ -49,7 +52,7 @@
 
   .stat {
     background: rgba(60, 30, 15, 0.5);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px); /* Размытие фона под плашкой */
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 200, 140, 0.3);
     padding: 8px 16px;
@@ -67,15 +70,16 @@
     font-weight: 800;
   }
 
+  /* Отображение жизней (сердечки) */
   #livesDisplay {
     font-size: 18px !important;
     letter-spacing: 2px;
     line-height: 1.2;
   }
 
-  /* ===== Кнопка паузы — БОЛЬШАЯ ===== */
+  /* Кнопка паузы (большая, для пальца) */
   #pauseBtn {
-    pointer-events: auto;
+    pointer-events: auto; /* Возвращаем кликабельность кнопке */
     background: rgba(60, 30, 15, 0.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -90,33 +94,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
     flex-shrink: 0;
   }
   #pauseBtn:active {
-    transform: scale(0.92);
+    transform: scale(0.92); /* Эффект нажатия */
     background: rgba(255, 180, 100, 0.35);
   }
 
-  /* ===== Комбо ===== */
+  /* ================= КОМБО (ВСПЛЫВАЮЩИЙ ТЕКСТ) ================= */
   #combo {
     position: absolute;
     top: 130px;
     left: 50%;
-    transform: translateX(-50%) scale(0);
+    transform: translateX(-50%) scale(0); /* Изначально спрятан */
     font-size: 48px;
     font-weight: 900;
     color: #ffb347;
     text-shadow: 0 0 25px rgba(255, 160, 60, 1), 0 4px 12px rgba(0,0,0,0.7);
     z-index: 10;
     pointer-events: none;
-    transition: transform 0.15s cubic-bezier(.17,.89,.32,1.49);
+    transition: transform 0.15s cubic-bezier(.17,.89,.32,1.49); /* Пружинистое появление */
     white-space: nowrap;
   }
-  #combo.show { transform: translateX(-50%) scale(1); }
+  #combo.show { transform: translateX(-50%) scale(1); } /* Класс для показа */
 
-  /* ===== Overlay ===== */
+  /* ================= OVERLAY (ЭКРАНЫ МЕНЮ И КОНЦА ИГРЫ) ================= */
   #overlay {
     position: absolute;
     inset: 0;
@@ -126,19 +128,19 @@
     align-items: center;
     z-index: 20;
     background: rgba(30, 15, 8, 0.78);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px); /* Сильное размытие игры на фоне */
     -webkit-backdrop-filter: blur(12px);
     color: #fff3e0;
     text-align: center;
     padding: 24px;
     transition: opacity 0.4s;
   }
-  #overlay.hidden { opacity: 0; pointer-events: none; }
+  #overlay.hidden { opacity: 0; pointer-events: none; } /* Скрываем оверлей */
 
   #overlay h1 {
     font-size: clamp(44px, 12vw, 80px);
     background: linear-gradient(135deg, #ffcf8a, #ff8c42, #d94f1e);
-    -webkit-background-clip: text;
+    -webkit-background-clip: text; /* Делаем текст градиентным */
     background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 16px;
@@ -161,7 +163,7 @@
     line-height: 1.5;
   }
 
-  /* ===== БОЛЬШИЕ КНОПКИ ===== */
+  /* ================= БОЛЬШИЕ КНОПКИ ДЕЙСТВИЙ ================= */
   button {
     pointer-events: auto;
     padding: 20px 56px;
@@ -177,8 +179,6 @@
     transition: transform 0.15s, box-shadow 0.15s;
     margin: 10px;
     min-width: 260px;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
     font-family: inherit;
   }
   button:active {
@@ -211,7 +211,7 @@
     gap: 6px;
   }
 
-  /* ===== Ветер ===== */
+  /* ================= ИНДИКАТОР ВЕТРА ================= */
   #wind {
     position: absolute;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
@@ -226,10 +226,9 @@
     padding: 8px 14px;
     border-radius: 12px;
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
   }
 
-  /* ===== Кнопка звука — БОЛЬШАЯ ===== */
+  /* ================= КНОПКА ЗВУКА ================= */
   #soundToggle {
     position: absolute;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
@@ -238,7 +237,6 @@
     pointer-events: auto;
     background: rgba(60, 30, 15, 0.6);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 200, 140, 0.4);
     color: #ffcf8a;
     width: 64px;
@@ -250,15 +248,13 @@
     align-items: center;
     justify-content: center;
     transition: transform 0.15s, background 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
   #soundToggle:active {
     transform: scale(0.92);
     background: rgba(255, 180, 100, 0.35);
   }
 
-  /* ===== Landscape адаптация ===== */
+  /* ================= АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ ЭКРАН (LANDSCAPE) ================= */
   @media (orientation: landscape) and (max-height: 500px) {
     #ui { padding: 8px 12px; }
     .stat { padding: 6px 12px; font-size: 11px; }
@@ -277,6 +273,7 @@
 
 <canvas id="game"></canvas>
 
+<!-- Верхняя панель -->
 <div id="ui">
   <div class="stat">ОЧКИ <b id="score">0</b></div>
   <div style="display:flex; gap:10px; align-items:flex-start;">
@@ -291,6 +288,7 @@
 
 <button id="soundToggle" title="Звук">🔊</button>
 
+<!-- Экран приветствия -->
 <div id="overlay">
   <h1>ЛИСТОПАД</h1>
   <p>Лови осенние листья корзинкой. Собирай комбо за подряд!<br>
@@ -301,32 +299,40 @@
 </div>
 
 <script>
+// Оборачиваем весь код в IIFE (Immediately Invoked Function Expression), 
+// чтобы переменные не засоряли глобальную область видимости.
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
   let W, H, DPR;
+
+  // Функция для адаптации холста под размер экрана (с учетом Retina-дисплеев)
   function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = Math.min(window.devicePixelRatio || 1, 2); // Ограничиваем DPR до 2 для производительности
     W = window.innerWidth;
     H = window.innerHeight;
     canvas.width = W * DPR;
     canvas.height = H * DPR;
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
+    
+    // Масштабируем контекст, чтобы рисовать в обычных координатах
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    generateLandscape();
+    generateLandscape(); // Пересоздаем пейзаж при изменении размера
   }
 
   // ============================================================
-  // ==== АУДИО =====
+  // ==== АУДИО-ДВИЖОК (Web Audio API) ====
   // ============================================================
+  // Создает фоновую музыку и шум ветра процедурно (без mp3 файлов)
   const audioEngine = {
     ctx: null, master: null, musicGain: null, windGain: null,
     enabled: true, started: false,
     windSource: null, windLfo: null,
     melodyIndex: 0, scheduleTimer: null,
 
+    // Частоты нот для генерации аккордов (A minor, F major, C major, G major)
     noteFreq: {
       A2: 110.00, C3: 130.81, E3: 164.81,
       F2: 87.31,  A2b: 103.83, C3b: 123.47,
@@ -336,23 +342,28 @@
       C5: 523.25, D5: 587.33, E5: 659.25
     },
 
+    // Инициализация аудио-контекста (вызывается при первом клике)
     init() {
       if (this.ctx) return;
       const AC = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AC();
 
+      // Главный регулятор громкости
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.0;
+      this.master.gain.value = 0.0; // Начинаем с 0 и плавно повышаем
       this.master.connect(this.ctx.destination);
 
+      // Громкость музыки
       this.musicGain = this.ctx.createGain();
       this.musicGain.gain.value = 1.0;
       this.musicGain.connect(this.master);
 
+      // Громкость ветра
       this.windGain = this.ctx.createGain();
       this.windGain.gain.value = 0.04;
       this.windGain.connect(this.master);
 
+      // Создаем эффект эха (Delay)
       const delay = this.ctx.createDelay(0.5);
       delay.delayTime.value = 0.25;
       const feedback = this.ctx.createGain();
@@ -367,6 +378,7 @@
       wet.connect(this.master);
     },
 
+    // Воспроизведение одной ноты (осциллятора)
     playNote(freq, time, duration, volume, isBass = false) {
       const osc1 = this.ctx.createOscillator();
       const osc2 = this.ctx.createOscillator();
@@ -376,12 +388,14 @@
       osc1.type = 'sine';
       osc1.frequency.value = freq;
       osc2.type = 'triangle';
-      osc2.frequency.value = freq * 2;
+      osc2.frequency.value = freq * 2; // Добавляем обертон
 
+      // Огибающая громкости (атака и затухание)
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(volume, time + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
 
+      // Фильтр низких частот для мягкости звука
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(isBass ? 800 : 2000, time);
       filter.frequency.exponentialRampToValueAtTime(isBass ? 400 : 1000, time + duration);
@@ -401,66 +415,78 @@
       osc2.stop(time + duration + 0.1);
     },
 
+    // Генерация музыкальной фразы (аккорд + арпеджио + мелодия)
     schedulePhrase() {
       if (!this.started || !this.enabled) return;
       const t = this.ctx.currentTime + 0.05;
-      const phrase = this.melodyIndex % 4;
+      const phrase = this.melodyIndex % 4; // Циклично проходим 4 аккорда
       let bass, chordNotes, melody;
 
+      // Выбираем аккорд и ноты для мелодии
       switch(phrase) {
-        case 0:
+        case 0: // Am
           bass = this.noteFreq.A2;
           chordNotes = [this.noteFreq.E3, this.noteFreq.A2 * 2, this.noteFreq.C3 * 2];
           melody = [this.noteFreq.E4, this.noteFreq.G4, this.noteFreq.A4, this.noteFreq.B4];
           break;
-        case 1:
+        case 1: // F
           bass = this.noteFreq.F2;
           chordNotes = [this.noteFreq.C3, this.noteFreq.F2 * 2, this.noteFreq.A2b * 2];
           melody = [this.noteFreq.A4, this.noteFreq.G4, this.noteFreq.F4, this.noteFreq.E4];
           break;
-        case 2:
+        case 2: // C
           bass = this.noteFreq.C3;
           chordNotes = [this.noteFreq.G3s, this.noteFreq.C3 * 2, this.noteFreq.E3s * 2];
           melody = [this.noteFreq.E4, this.noteFreq.F4, this.noteFreq.G4, this.noteFreq.E4];
           break;
-        case 3:
+        case 3: // G
           bass = this.noteFreq.G2;
           chordNotes = [this.noteFreq.D3, this.noteFreq.G2 * 2, this.noteFreq.B2 * 2];
           melody = [this.noteFreq.D5, this.noteFreq.C5, this.noteFreq.B4, this.noteFreq.A4];
           break;
       }
 
+      // Играем бас
       this.playNote(bass, t, 2.8, 0.45, true);
+      
+      // Играем арпеджио (перебор аккорда)
       for (let i = 0; i < 6; i++) {
         this.playNote(chordNotes[i % chordNotes.length], t + i * 0.45, 0.6, 0.16, true);
       }
+      
+      // Играем мелодию поверх
       melody.forEach((note, i) => {
         this.playNote(note, t + 0.2 + i * 0.7, 0.8, 0.28, false);
       });
 
       this.melodyIndex++;
+      // Планируем следующую фразу через 2.8 секунды
       this.scheduleTimer = setTimeout(() => this.schedulePhrase(), 2800);
     },
 
+    // Создание звука ветра (белый шум + фильтрация)
     startWind() {
       const bufferSize = 2 * this.ctx.sampleRate;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
+      // Заполняем буфер случайными числами (белый шум)
       for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
 
       this.windSource = this.ctx.createBufferSource();
       this.windSource.buffer = buffer;
-      this.windSource.loop = true;
+      this.windSource.loop = true; // Зацикливаем
 
+      // Полосовой фильтр, чтобы шум звучал как ветер, а не как шипение
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'bandpass';
       filter.frequency.value = 400;
       filter.Q.value = 0.8;
 
+      // Медленная модуляция громкости (LFO) для эффекта порывов ветра
       const lfoGain = this.ctx.createGain();
       lfoGain.gain.value = 0.03;
       this.windLfo = this.ctx.createOscillator();
-      this.windLfo.frequency.value = 0.15;
+      this.windLfo.frequency.value = 0.15; // Очень медленно
       this.windLfo.connect(lfoGain);
       lfoGain.connect(this.windGain.gain);
       this.windLfo.start();
@@ -470,17 +496,22 @@
       this.windSource.start();
     },
 
+    // Запуск аудио
     start() {
       this.init();
       if (this.ctx.state === 'suspended') this.ctx.resume();
       if (this.started) return;
       this.started = true;
+      
+      // Плавно повышаем общую громкость за 4 секунды
       this.master.gain.cancelScheduledValues(this.ctx.currentTime);
       this.master.gain.linearRampToValueAtTime(0.35, this.ctx.currentTime + 4);
+      
       this.startWind();
       setTimeout(() => this.schedulePhrase(), 500);
     },
 
+    // Включение/выключение звука
     toggle() {
       if (!this.ctx) { this.enabled = !this.enabled; return; }
       this.enabled = !this.enabled;
@@ -495,11 +526,12 @@
   };
 
   // ============================================================
-  // ==== ПЕЙЗАЖ =====
+  // ==== ГЕНЕРАЦИЯ ПЕЙЗАЖА (ФОН) ====
   // ============================================================
   let hills = [], bgTrees = [], clouds = [];
 
   function generateLandscape() {
+    // Генерация холмов (4 слоя с разной прозрачностью для глубины)
     hills = [];
     const layers = [
       { color: '#5c3a2e', yBase: 0.55, amp: 40, count: 5, alpha: 0.55 },
@@ -507,18 +539,21 @@
       { color: '#3a1f14', yBase: 0.78, amp: 70, count: 3, alpha: 0.85 },
       { color: '#2a1409', yBase: 0.92, amp: 50, count: 3, alpha: 1.0 }
     ];
+    
     layers.forEach((layer, li) => {
       const pts = [];
       const seed = li * 137;
       for (let i = 0; i <= layer.count; i++) {
         const t = i / layer.count;
         const x = t * W;
+        // Используем синусоиды для создания естественных неровностей
         const noise = Math.sin(seed + i * 1.7) * 0.5 + Math.sin(seed * 2 + i * 3.3) * 0.3;
         pts.push({ x, y: H * layer.yBase - noise * layer.amp });
       }
       hills.push({ ...layer, points: pts });
     });
 
+    // Генерация деревьев на заднем плане
     bgTrees = [];
     const treeCount = Math.max(4, Math.floor(W / 200));
     for (let i = 0; i < treeCount; i++) {
@@ -527,12 +562,14 @@
       const h = 100 + Math.random() * 120;
       const crownR = 40 + Math.random() * 35;
       const hue = Math.random();
+      // Случайный оттенок осенней листвы
       const color = hue < 0.4 ? 'rgba(120, 50, 25, 0.75)' :
                     hue < 0.75 ? 'rgba(150, 70, 30, 0.75)' :
                                  'rgba(100, 45, 20, 0.75)';
       bgTrees.push({ x, baseY, h, crownR, color });
     }
 
+    // Генерация облаков
     clouds = [];
     for (let i = 0; i < 4; i++) {
       clouds.push({
@@ -545,24 +582,37 @@
       });
     }
   }
+
+  // Первичная настройка и подписка на изменение размера окна
   resize();
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
 
   // ============================================================
-  // ==== СОСТОЯНИЕ =====
+  // ==== СОСТОЯНИЕ ИГРЫ ====
   // ============================================================
   const state = {
-    running: false, paused: false, score: 0, lives: 3,
-    combo: 0, bestCombo: 0, time: 0,
-    wind: 0, windTimer: 0,
-    spawnTimer: 0, spawnInterval: 0.45, difficulty: 0
+    running: false,   // Идет ли игра
+    paused: false,    // На паузе ли
+    score: 0,         // Текущий счет
+    lives: 3,         // Жизни
+    combo: 0,         // Текущее комбо
+    bestCombo: 0,     // Лучшее комбо за игру
+    time: 0,          // Время игры (для сложности)
+    wind: 0,          // Сила и направление ветра (-1 до 1)
+    windTimer: 0,     // Таймер до смены ветра
+    spawnTimer: 0,    // Таймер до спавна следующего объекта
+    spawnInterval: 0.45, // Базовый интервал спавна
+    difficulty: 0     // Уровень сложности (0-3)
   };
 
+  // Корзина игрока
   const BASKET = { x: 0, y: 0, w: 130, h: 80, targetX: 0, tilt: 0 };
 
+  // Массивы для объектов
   const leaves = [], hazards = [], particles = [], ambientLeaves = [];
 
+  // Цвета осенних листьев (пары: основной и тёмный оттенок)
   const LEAF_COLORS = [
     ['#ffb347', '#ff8c42'], ['#e74c3c', '#c0392b'],
     ['#f4d03f', '#d4a017'], ['#d35400', '#a04000'],
@@ -573,10 +623,11 @@
     return LEAF_COLORS[(Math.random() * LEAF_COLORS.length) | 0];
   }
 
-  // ===== УВЕЛИЧЕННАЯ СКОРОСТЬ ПАДЕНИЯ =====
-  const BASE_LEAF_SPEED = 140;   // было 60
-  const BASE_HAZARD_SPEED = 170;  // было 80
+  // Базовые скорости падения
+  const BASE_LEAF_SPEED = 140;
+  const BASE_HAZARD_SPEED = 170;
 
+  // Создание игрового листа (за который дают очки)
   function spawnLeaf() {
     const size = 24 + Math.random() * 18;
     const [c1, c2] = randomLeafColor();
@@ -587,13 +638,14 @@
       vy: BASE_LEAF_SPEED + Math.random() * 80 + state.difficulty * 25,
       size, rot: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 4,
-      swayAmp: 20 + Math.random() * 40,
+      swayAmp: 20 + Math.random() * 40, // Амплитуда покачивания
       swayPhase: Math.random() * Math.PI * 2,
       swaySpeed: 1 + Math.random() * 1.5,
       color1: c1, color2: c2, alive: true
     });
   }
 
+  // Создание каштана (препятствие)
   function spawnHazard() {
     const size = 28 + Math.random() * 12;
     hazards.push({
@@ -607,6 +659,7 @@
     });
   }
 
+  // Создание частиц (взрыв при сборе листа или ударе)
   function spawnParticles(x, y, color, count = 8) {
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
@@ -622,6 +675,7 @@
     }
   }
 
+  // Создание фонового листа (для красоты, не влияет на геймплей)
   function spawnAmbientLeaf() {
     ambientLeaves.push({
       x: Math.random() * W, y: -20,
@@ -631,24 +685,27 @@
       rot: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 2,
       color: randomLeafColor()[0],
-      alpha: 0.25 + Math.random() * 0.25
+      alpha: 0.25 + Math.random() * 0.25 // Полупрозрачные
     });
   }
 
   // ============================================================
-  // ==== РЕНДЕР ПЕЙЗАЖА =====
+  // ==== ФУНКЦИИ ОТРИСОВКИ ====
   // ============================================================
+  
+  // Рисуем небо, солнце и облака
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0,    '#2b1810');
+    g.addColorStop(0,    '#2b1810'); // Темно-коричневый
     g.addColorStop(0.25, '#5c2e1c');
     g.addColorStop(0.5,  '#a4531f');
-    g.addColorStop(0.72, '#e08a3c');
+    g.addColorStop(0.72, '#e08a3c'); // Оранжевый закат
     g.addColorStop(0.88, '#f2b25e');
     g.addColorStop(1,    '#8b4a24');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
+    // Солнце (свечение + ядро)
     const sunX = W * 0.75, sunY = H * 0.32, sunR = 90;
     const sunGlow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, sunR * 3.5);
     sunGlow.addColorStop(0, 'rgba(255, 235, 180, 0.95)');
@@ -667,6 +724,7 @@
     ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
     ctx.fill();
 
+    // Облака (мягкие эллипсы с градиентом)
     clouds.forEach(c => {
       const cg = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.w * 0.5);
       cg.addColorStop(0, `rgba(255, 220, 180, ${c.alpha})`);
@@ -678,6 +736,7 @@
     });
   }
 
+  // Рисуем холмы на фоне
   function drawHills() {
     hills.forEach(layer => {
       ctx.beginPath();
@@ -688,12 +747,13 @@
 
       const g = ctx.createLinearGradient(0, H * layer.yBase - 60, 0, H);
       g.addColorStop(0, layer.color);
-      g.addColorStop(1, shade(layer.color, -0.3));
+      g.addColorStop(1, shade(layer.color, -0.3)); // Затемняем низ
       ctx.fillStyle = g;
       ctx.globalAlpha = layer.alpha;
       ctx.fill();
       ctx.globalAlpha = 1;
 
+      // Тонкая подсветка контура холмов
       ctx.beginPath();
       layer.points.forEach((p, i) => {
         if (i === 0) ctx.moveTo(p.x, p.y);
@@ -705,11 +765,14 @@
     });
   }
 
+  // Рисуем деревья
   function drawBgTrees() {
     bgTrees.forEach(t => {
+      // Ствол
       ctx.fillStyle = 'rgba(30, 15, 8, 0.7)';
       ctx.fillRect(t.x - 3, t.baseY - t.h, 6, t.h);
 
+      // Крона (состоит из нескольких кругов для объема)
       const crownGrad = ctx.createRadialGradient(
         t.x, t.baseY - t.h, 0, t.x, t.baseY - t.h, t.crownR * 1.6
       );
@@ -732,6 +795,7 @@
     });
   }
 
+  // Легкий туман у земли
   function drawGroundMist() {
     const g = ctx.createLinearGradient(0, H * 0.7, 0, H);
     g.addColorStop(0, 'rgba(255, 180, 110, 0)');
@@ -741,6 +805,7 @@
     ctx.fillRect(0, H * 0.7, W, H * 0.3);
   }
 
+  // Вспомогательная функция: затемнение/осветление hex-цвета
   function shade(hex, amt) {
     const c = hex.replace('#', '');
     const num = parseInt(c, 16);
@@ -753,35 +818,40 @@
     return `rgb(${r},${g},${b})`;
   }
 
-  // ============================================================
-  // ==== РЕНДЕР ОБЪЕКТОВ =====
-  // ============================================================
+  // Рисуем игровой лист (с прожилкой и свечением)
   function drawLeaf(l) {
     ctx.save();
     ctx.translate(l.x, l.y);
     ctx.rotate(l.rot);
     const s = l.size;
+    
     const grad = ctx.createLinearGradient(-s, -s, s, s);
     grad.addColorStop(0, l.color1);
     grad.addColorStop(1, l.color2);
+    
+    // Форма листа (две кривые Безье)
     ctx.beginPath();
     ctx.moveTo(0, -s);
     ctx.bezierCurveTo(s * 0.9, -s * 0.5, s * 0.9, s * 0.5, 0, s);
     ctx.bezierCurveTo(-s * 0.9, s * 0.5, -s * 0.9, -s * 0.5, 0, -s);
     ctx.fillStyle = grad;
     ctx.shadowColor = l.color1;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 12; // Свечение
     ctx.fill();
     ctx.shadowBlur = 0;
+    
+    // Прожилка по центру
     ctx.beginPath();
     ctx.moveTo(0, -s * 0.8);
     ctx.lineTo(0, s * 0.8);
     ctx.strokeStyle = 'rgba(80, 30, 10, 0.4)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    
     ctx.restore();
   }
 
+  // Рисуем фоновый лист (простой полупрозрачный эллипс)
   function drawAmbientLeaf(a) {
     ctx.save();
     ctx.globalAlpha = a.alpha;
@@ -795,11 +865,14 @@
     ctx.globalAlpha = 1;
   }
 
+  // Рисуем каштан (коричневый круг с шипами)
   function drawHazard(h) {
     ctx.save();
     ctx.translate(h.x, h.y);
     ctx.rotate(h.rot);
     const s = h.size;
+    
+    // Основа (круг с градиентом)
     ctx.beginPath();
     ctx.arc(0, 0, s * 0.6, 0, Math.PI * 2);
     const g = ctx.createRadialGradient(-s*0.2, -s*0.2, 2, 0, 0, s*0.6);
@@ -807,6 +880,8 @@
     g.addColorStop(1, '#4a2c15');
     ctx.fillStyle = g;
     ctx.fill();
+    
+    // Шипы по кругу
     ctx.strokeStyle = '#2e1a0a';
     ctx.lineWidth = 2;
     for (let i = 0; i < 10; i++) {
@@ -819,23 +894,27 @@
     ctx.restore();
   }
 
+  // Рисуем корзину (плетеная, с ручкой)
   function drawBasket() {
     const b = BASKET;
     ctx.save();
     ctx.translate(b.x, b.y + b.h * 0.5);
-    ctx.rotate(b.tilt);
+    ctx.rotate(b.tilt); // Наклоняем при движении
 
+    // Тень под корзиной
     ctx.beginPath();
     ctx.ellipse(0, b.h * 0.55, b.w * 0.5, 10, 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fill();
 
+    // Основное тело (трапеция)
     ctx.beginPath();
     ctx.moveTo(-b.w * 0.45, -b.h * 0.4);
     ctx.lineTo(b.w * 0.45, -b.h * 0.4);
     ctx.lineTo(b.w * 0.35, b.h * 0.5);
     ctx.lineTo(-b.w * 0.35, b.h * 0.5);
     ctx.closePath();
+    
     const grad = ctx.createLinearGradient(0, -b.h * 0.4, 0, b.h * 0.5);
     grad.addColorStop(0, '#c98a3a');
     grad.addColorStop(0.5, '#8b5a2b');
@@ -843,6 +922,7 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
+    // Плетение (горизонтальные линии)
     ctx.strokeStyle = 'rgba(60, 30, 10, 0.5)';
     ctx.lineWidth = 1.5;
     for (let i = 1; i < 4; i++) {
@@ -855,6 +935,7 @@
       ctx.stroke();
     }
 
+    // Верхний обод (овал)
     ctx.beginPath();
     ctx.ellipse(0, -b.h * 0.4, b.w * 0.47, 9, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#a0682d';
@@ -862,12 +943,14 @@
     ctx.strokeStyle = '#5a3a1a';
     ctx.lineWidth = 2;
     ctx.stroke();
+    
     ctx.restore();
   }
 
+  // Рисуем частицы
   function drawParticles() {
     for (const p of particles) {
-      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.globalAlpha = p.life / p.maxLife; // Плавно исчезают
       ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -877,65 +960,83 @@
   }
 
   // ============================================================
-  // ==== ОБНОВЛЕНИЕ =====
+  // ==== ЛОГИКА ОБНОВЛЕНИЯ (ФИЗИКА И КОЛЛИЗИИ) ====
   // ============================================================
   function update(dt) {
     state.time += dt;
 
+    // Двигаем облака
     clouds.forEach(c => {
       c.x += c.speed * dt;
       if (c.x - c.w > W) c.x = -c.w;
     });
 
+    // Спавн фоновых листьев
     if (Math.random() < 0.35) spawnAmbientLeaf();
     for (let i = ambientLeaves.length - 1; i >= 0; i--) {
       const a = ambientLeaves[i];
       a.x += (a.vx + state.wind * 20) * dt;
       a.y += a.vy * dt;
       a.rot += a.rotSpeed * dt;
+      // Удаляем, если улетел за нижнюю границу (75% экрана)
       if (a.y > H * 0.75) ambientLeaves.splice(i, 1);
     }
 
+    // Логика ветра
     state.windTimer -= dt;
     if (state.windTimer <= 0) {
-      state.wind = (Math.random() - 0.5) * 2;
+      state.wind = (Math.random() - 0.5) * 2; // от -1 до 1
       state.windTimer = 6 + Math.random() * 5;
+      // Обновляем стрелочку в интерфейсе
       document.getElementById('windDir').textContent =
         state.wind > 0.3 ? '→' : state.wind < -0.3 ? '←' : '≈';
     }
 
-    state.difficulty = Math.min(3, state.time / 30);
+    // Усложнение игры со временем
+    state.difficulty = Math.min(3, state.time / 30); // Максимум 3
     state.spawnInterval = Math.max(0.22, 0.5 - state.difficulty * 0.08);
 
+    // Спавн игровых объектов
     state.spawnTimer -= dt;
     if (state.spawnTimer <= 0) {
       state.spawnTimer = state.spawnInterval * (0.7 + Math.random() * 0.6);
-      if (Math.random() < 0.75) spawnLeaf();
-      else spawnHazard();
+      if (Math.random() < 0.75) spawnLeaf(); // 75% шанс на лист
+      else spawnHazard();                    // 25% шанс на каштан
     }
 
+    // Плавное движение корзины за пальцем/мышью
     BASKET.x += (BASKET.targetX - BASKET.x) * Math.min(1, dt * 16);
-    BASKET.tilt = (BASKET.targetX - BASKET.x) * 0.0018;
-    BASKET.tilt = Math.max(-0.25, Math.min(0.25, BASKET.tilt));
+    BASKET.tilt = (BASKET.targetX - BASKET.x) * 0.0018; // Наклон
+    BASKET.tilt = Math.max(-0.25, Math.min(0.25, BASKET.tilt)); // Ограничиваем наклон
 
+    // Обработка игровых листьев
     for (let i = leaves.length - 1; i >= 0; i--) {
       const l = leaves[i];
       l.swayPhase += l.swaySpeed * dt;
+      
+      // Движение с учетом ветра и покачивания
       l.x += (l.vx + state.wind * 80 + Math.cos(l.swayPhase) * l.swayAmp) * dt;
       l.y += l.vy * dt;
       l.rot += l.rotSpeed * dt;
 
+      // Проверка коллизии с корзиной (AABB - прямоугольники)
       if (l.y > BASKET.y - 10 && l.y < BASKET.y + BASKET.h &&
           l.x > BASKET.x - BASKET.w * 0.5 && l.x < BASKET.x + BASKET.w * 0.5) {
+        
+        // Начисляем очки (базовые 10 + бонус за комбо)
         state.score += 10 + state.combo * 2;
         state.combo++;
         if (state.combo > state.bestCombo) state.bestCombo = state.combo;
-        spawnParticles(l.x, l.y, l.color1, 12);
+        
+        spawnParticles(l.x, l.y, l.color1, 12); // Эффект взрыва
         showCombo();
         updateUI();
-        leaves.splice(i, 1);
+        
+        leaves.splice(i, 1); // Удаляем пойманный лист
         continue;
       }
+      
+      // Если лист упал на землю - сбрасываем комбо
       if (l.y > H + 60) {
         state.combo = 0;
         updateUI();
@@ -943,52 +1044,62 @@
       }
     }
 
+    // Обработка каштанов (препятствий)
     for (let i = hazards.length - 1; i >= 0; i--) {
       const h = hazards[i];
       h.x += (h.vx + state.wind * 60) * dt;
       h.y += h.vy * dt;
       h.rot += h.rotSpeed * dt;
 
+      // Коллизия с корзиной
       if (h.y > BASKET.y - 10 && h.y < BASKET.y + BASKET.h &&
           h.x > BASKET.x - BASKET.w * 0.45 && h.x < BASKET.x + BASKET.w * 0.45) {
-        state.lives--;
-        state.combo = 0;
+        
+        state.lives--; // Отнимаем жизнь
+        state.combo = 0; // Сбрасываем комбо
         spawnParticles(h.x, h.y, '#8b5a2b', 16);
-        shakeScreen();
+        shakeScreen(); // Тряска экрана
         updateUI();
+        
         hazards.splice(i, 1);
-        if (state.lives <= 0) gameOver();
+        if (state.lives <= 0) gameOver(); // Конец игры
         continue;
       }
+      
+      // Удаляем упавшие каштаны
       if (h.y > H + 60) hazards.splice(i, 1);
     }
 
+    // Физика частиц (гравитация)
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vy += 400 * dt;
-      p.vx *= 0.98;
+      p.vy += 400 * dt; // Гравитация
+      p.vx *= 0.98;     // Трение
       p.life -= dt;
       if (p.life <= 0) particles.splice(i, 1);
     }
 
+    // Затухание тряски экрана
     if (shake.time > 0) {
       shake.time -= dt;
       shake.mag *= 0.9;
     }
   }
 
+  // Объект для управления тряской экрана
   const shake = { time: 0, mag: 0 };
   function shakeScreen() {
     shake.time = 0.3;
     shake.mag = 15;
   }
 
+  // Показ текста комбо
   let comboTimeout = null;
   function showCombo() {
     const el = document.getElementById('combo');
-    if (state.combo >= 3) {
+    if (state.combo >= 3) { // Показываем только от 3х подряд
       el.textContent = `x${state.combo} КОМБО!`;
       el.classList.add('show');
       clearTimeout(comboTimeout);
@@ -996,6 +1107,7 @@
     }
   }
 
+  // Обновление цифр в интерфейсе
   function updateUI() {
     document.getElementById('score').textContent = state.score;
     document.getElementById('livesDisplay').textContent =
@@ -1004,10 +1116,12 @@
   }
 
   // ============================================================
-  // ==== РЕНДЕР =====
+  // ==== ГЛАВНАЯ ФУНКЦИЯ ОТРИСОВКИ КАДРА ====
   // ============================================================
   function render() {
     ctx.save();
+    
+    // Если активна тряска - сдвигаем весь холст
     if (shake.time > 0) {
       ctx.translate(
         (Math.random() - 0.5) * shake.mag,
@@ -1015,6 +1129,7 @@
       );
     }
 
+    // Рисуем слои от дальнего к ближнему
     drawSky();
     drawHills();
     drawBgTrees();
@@ -1026,6 +1141,9 @@
     drawParticles();
     drawBasket();
 
+    // Виньетка (затемнение по краям для фокуса). 
+    // ВАЖНО: Рисуется внутри тряски, поэтому может немного дрожать. 
+    // В идеале её вынести после ctx.restore(), но в этой версии оставлено так.
     const vg = ctx.createRadialGradient(
       W / 2, H / 2, Math.min(W, H) * 0.3,
       W / 2, H / 2, Math.max(W, H) * 0.75
@@ -1039,29 +1157,40 @@
   }
 
   // ============================================================
-  // ==== ИГРОВОЙ ЦИКЛ =====
+  // ==== ИГРОВОЙ ЦИКЛ (Game Loop) ====
   // ============================================================
   let lastTime = 0;
   function loop(t) {
+    // Вычисляем время, прошедшее с прошлого кадра (в секундах)
+    // Ограничиваем до 0.05, чтобы при лагах игра не "телепортировалась"
     const dt = Math.min(0.05, (t - lastTime) / 1000) || 0;
     lastTime = t;
+    
+    // Обновляем физику только если игра идет и не на паузе
     if (state.running && !state.paused) update(dt);
+    
+    // Рисуем кадр
     render();
+    
+    // Запрашиваем следующий кадр
     requestAnimationFrame(loop);
   }
 
   // ============================================================
-  // ==== УПРАВЛЕНИЕ (touch + mouse) =====
+  // ==== УПРАВЛЕНИЕ (Мышь и Тач) ====
   // ============================================================
+  
+  // Установка цели для корзины (с ограничением по краям)
   function setTarget(clientX) {
     BASKET.targetX = Math.max(BASKET.w * 0.5, Math.min(W - BASKET.w * 0.5, clientX));
   }
 
+  // Управление мышью (для ПК)
   window.addEventListener('mousemove', e => {
     if (state.running && !state.paused) setTarget(e.clientX);
   });
 
-  // Touch-управление: палец ведёт корзинку
+  // Управление пальцем (для телефонов)
   let touchActive = false;
   window.addEventListener('touchstart', e => {
     if (state.running && !state.paused) {
@@ -1072,7 +1201,7 @@
 
   window.addEventListener('touchmove', e => {
     if (state.running && !state.paused && touchActive) {
-      e.preventDefault();
+      e.preventDefault(); // Блокируем скролл страницы
       setTarget(e.touches[0].clientX);
     }
   }, { passive: false });
@@ -1080,7 +1209,7 @@
   window.addEventListener('touchend', () => { touchActive = false; });
   window.addEventListener('touchcancel', () => { touchActive = false; });
 
-  // Клавиатура (для десктопа)
+  // Управление клавиатурой (Стрелки или A/D)
   const keys = {};
   window.addEventListener('keydown', e => {
     keys[e.key] = true;
@@ -1089,6 +1218,7 @@
   });
   window.addEventListener('keyup', e => { keys[e.key] = false; });
 
+  // Отдельный интервал для плавного движения корзины с клавиатуры
   setInterval(() => {
     if (!state.running || state.paused) return;
     const speed = 14;
@@ -1099,11 +1229,12 @@
   }, 16);
 
   // ============================================================
-  // ==== ПАУЗА / СТАРТ / КОНЕЦ =====
+  // ==== УПРАВЛЕНИЕ СОСТОЯНИЕМ (ПАУЗА, СТАРТ, КОНЕЦ) ====
   // ============================================================
   const pauseBtn = document.getElementById('pauseBtn');
   const overlay = document.getElementById('overlay');
 
+  // Постановка/снятие с паузы
   function togglePause() {
     if (!state.running) return;
     state.paused = !state.paused;
@@ -1117,6 +1248,7 @@
     }
   }
 
+  // Показ меню паузы
   function showPauseMenu() {
     overlay.innerHTML = `
       <div id="pauseMenu">
@@ -1145,6 +1277,7 @@
     });
   }
 
+  // Показ главного меню
   function showMainMenu() {
     overlay.innerHTML = `
       <h1>ЛИСТОПАД</h1>
@@ -1158,6 +1291,7 @@
     document.getElementById('startBtn').addEventListener('click', startGame);
   }
 
+  // Сброс всех параметров перед новой игрой
   function resetGame() {
     state.running = true;
     state.paused = false;
@@ -1170,17 +1304,23 @@
     state.wind = 0;
     state.windTimer = 3;
     state.spawnTimer = 0.4;
+    
+    // Очищаем массивы объектов
     leaves.length = 0;
     hazards.length = 0;
     particles.length = 0;
     ambientLeaves.length = 0;
+    
+    // Ставим корзину по центру
     BASKET.x = W / 2;
     BASKET.targetX = W / 2;
     BASKET.y = H - 150;
+    
     updateUI();
     document.getElementById('windDir').textContent = '—';
   }
 
+  // Экран проигрыша
   function gameOver() {
     state.running = false;
     overlay.innerHTML = `
@@ -1198,14 +1338,16 @@
     document.getElementById('menuBtn').addEventListener('click', showMainMenu);
   }
 
+  // Запуск игры
   function startGame() {
-    audioEngine.start();
+    audioEngine.start(); // Включаем музыку (требует действия пользователя)
     overlay.classList.add('hidden');
     overlay.innerHTML = '';
     pauseBtn.textContent = '⏸';
     resetGame();
   }
 
+  // Обработчики кнопок
   pauseBtn.addEventListener('click', togglePause);
 
   const soundBtn = document.getElementById('soundToggle');
@@ -1219,13 +1361,15 @@
     soundBtn.textContent = audioEngine.enabled ? '🔊' : '🔇';
   });
 
-  // Инициализация
+  // Инициализация корзины перед первым кадром
   BASKET.x = W / 2;
   BASKET.targetX = W / 2;
   BASKET.y = H - 150;
 
+  // Обработчик стартовой кнопки в самом первом меню
   document.getElementById('startBtn').addEventListener('click', startGame);
 
+  // Запускаем игровой цикл
   requestAnimationFrame(loop);
 })();
 </script>
